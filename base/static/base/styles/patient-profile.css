@@ -1,0 +1,12 @@
+#dropdown {
+  color: white;
+  margin-right: 60px;
+}
+
+#home {
+  margin-left: 10px;
+}
+
+.dropup .hide-toggle.dropdown-toggle::after {
+  display: none !important;
+}
