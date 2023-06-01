@@ -15,8 +15,6 @@ from .models import Patient, Disease
 
 import numpy as np
 import pandas as pd
-import csv
-import json
 import pickle
 from nltk.corpus import wordnet as wn
 
