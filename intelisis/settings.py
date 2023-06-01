@@ -28,6 +28,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
+CORS_ALLOWED_ORIGINS = ["*"]
+CSRF_TRUSTED_ORIGINS = ["*"]
 
 # Application definition
 
