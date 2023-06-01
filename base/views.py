@@ -327,7 +327,6 @@ USER = None
 
 def related_symptom(client_symp):
     sentence = "Could you please be more specific ? <br>"
-    # i = len(s)
     for num, j in enumerate(client_symp):
         sentence += str(num) + ") " + clean_symptom(j) + "<br>"
     if num != 0:
@@ -378,14 +377,16 @@ def logInPage(request):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            patient, _ = Patient.objects.get_or_create(username=username)
-            global USER
-            USER = user
-            # patient.email = email
-            patient.user = user
-            patient.save()
-            global current_user
-            current_user = patient
+            # Only create a patient profile for only non-admin users
+            if not user.is_staff:
+                patient, _ = Patient.objects.get_or_create(username=username)
+                # For first time login patients only
+                if not patient.user:
+                    patient.user = user
+                    patient.save()
+                global USER, current_user
+                USER = user
+                current_user = patient
             login(request, user)
             if user.is_staff:
                 return redirect('admin-page')
@@ -486,8 +487,14 @@ def chat_page(request):
     else:
         return redirect('login')
 
+#
+
 
 def model_response(request):
+    """
+        Takes an input from the user and provides a feedback. 
+        Basically, the method contains the machine learning solution which is incorporated into the software system
+    """
     resp = request.GET.get('msg')  # resp is the response from the user
     session = request.session
 
@@ -546,7 +553,6 @@ def model_response(request):
             # related symptom  (of first symptom)
             session['step'] = "related_symp1"
             resp = related_symptom(psym1)
-            print(resp)
             if resp != 0:
                 return HttpResponse(resp)
         else:
@@ -713,9 +719,7 @@ def model_response(request):
         if "all" not in session:
             session["asked"] = []
             session["all"] = [cols_dict[psym1], cols_dict[psym2]]
-            print(f'All: {session["all"]}')
         session["diseases"] = possible_diseases(session["all"])
-        print(f'session diseases: {session["diseases"]}')
         all_sym = session["all"]
         diseases = session["diseases"]
         dis = diseases[0]
@@ -756,7 +760,6 @@ def model_response(request):
             diseases = session["diseases"]
             if diseases[0] in PD:
                 session["test_prediction"] = diseases[0]
-                print(f'testpred: {session["test_prediction"]}')
                 PD.remove(diseases[0])
             session["diseases"] = PD
             session['step'] = "for_dis"
@@ -775,37 +778,40 @@ def model_response(request):
         KNN_model = load_model()
         result = KNN_model.predict(
             one_hot_vector(session["all"], all_symptoms))
-        print(f"The result is {result[0]}")
         session['step'] = "END"
     if session['step'] == "END":
         if result is not None:
             if result[0] != session["test_prediction"]:
                 session['step'] = "QUIT"
                 return HttpResponse("According to the symptoms specified, I am sorry I cannot predict your "
-                                    "disease with confidence. <br> Please consult your doctor.Re-enter your major symptom or Tap Q to "
+                                    "disease with confidence. <br> Please consult a doctor.Re-enter your major symptom or Tap Q to "
                                     "stop the conversation ")
             session['step'] = "GUIDELINES"
             session["disease"] = result[0]
-            # Save diagnosed disease
-            department = train_d.loc[train_d['prognosis']
-                                     == session["disease"], 'department'].iloc[0]
-            session["department"] = department
-            d = Disease.objects.create(
-                patient=current_user, title=result[0], department=department)
-            d.save()
-            return HttpResponse(f'Dear {session["name"]} , you may have {session["disease"]}. Tap G to get guidelines on what to do.')
+            # Check if user is connected (logged in before proceeding)
+            if request.user is not None:
+                # Save diagnosed disease
+                department = train_d.loc[train_d['prognosis']
+                                         == session["disease"], 'department'].iloc[0]
+                session["department"] = department
+                d = Disease.objects.create(
+                    patient=current_user, title=result[0], department=department)
+                d.save()
+                return HttpResponse(f'Dear {session["name"]} , you may have {session["disease"]}. Tap G to get guidelines on what to do.')
+            else:
+                return HttpResponse(f'User session is over. Please re-login to continue ... ')
+
         else:
             # Ask user if they want to continue with the conversation or not
             session['step'] = "QUIT"
             return HttpResponse("Do you want to provide more on what you feeling? Tap Q to stop the conversation")
     if session["step"] == "GUIDELINES":
         session["step"] = "FINAL"
-        if resp.upper() == "G":
-            # direct patient to the appropriate unit for further diagnosis and interaction with a doctor
-            department = train_d.loc[train_d['prognosis']
-                                     == session["disease"], 'department'].iloc[0]
-            return HttpResponse(
-                f'Kindly see a doctor at the "{department.upper()}" unit. Tap any key to continue...')
+        # direct patient to the appropriate unit for further diagnosis and interaction with a doctor
+        department = train_d.loc[train_d['prognosis']
+                                 == session["disease"], 'department'].iloc[0]
+        return HttpResponse(
+            f'Kindly see a doctor at the "{department.upper()}" unit. Tap any key to continue...')
     if session['step'] == "FINAL":
         session['step'] = "BYE"
         return HttpResponse("Diagnosis completed. Do you need another medical consultation (yes or no)?")

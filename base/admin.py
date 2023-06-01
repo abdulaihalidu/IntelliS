@@ -19,6 +19,6 @@ class DiseaseAdmin(admin.ModelAdmin):
 
 
 # Customize the default Django admin site
-admin.site.site_header = "IntelliS administration"
+admin.site.site_header = "IntelliS Administration"
 admin.site.site_title = "IntelliS Admin Site"
-admin.site.index_title = "IntelliS admin"
+admin.site.index_title = "IntelliS Admin Panel"

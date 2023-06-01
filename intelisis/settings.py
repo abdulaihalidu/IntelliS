@@ -77,8 +77,15 @@ WSGI_APPLICATION = 'intelisis.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        # 'ENGINE': 'django.db.backends.sqlite3',
+        # 'NAME': BASE_DIR / 'db.sqlite3',
+        # Use postgreSQL on local machine. This setting should be changed accordingly depending on where the database is hosted.
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'IntelliS',
+        'USER': 'IntelliS',
+        'PASSWORD': 'password',
+        'HOST': 'localhost',
+        'PORT': '5432'
     }
 }
 
