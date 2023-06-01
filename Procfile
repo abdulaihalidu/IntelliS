@@ -1,1 +1,0 @@
-web: gunicorn intelisis.wsgi --log-file - 
