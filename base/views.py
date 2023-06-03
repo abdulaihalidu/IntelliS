@@ -2,13 +2,12 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.urls import reverse_lazy
 from django.shortcuts import redirect, render
 from django.http import HttpResponse
-from django.views.generic.list import ListView
-
 
 ################## USER UTILS  ###########################
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from .forms import createUserForm
+from django.views.generic.list import ListView
 
 ################ MODELS IMPOERTS ##########################
 from .models import Patient, Disease
@@ -109,10 +108,10 @@ cols_dict = dict(zip(all_symptoms_preprocessed, symptom_cols))
 #     """
 #     ar = translator.translate(text, src=src_lan, dest=dest_lang).text
 #     return ar
-
-
 ############################ SYNTACTIC SIMILARITY #######################
 # a helper function to calculate the Jaccard similarity
+
+
 def jaccard_similary(string1, string2):
     list1 = string1.split(' ')
     list2 = string2.split(' ')
@@ -228,17 +227,6 @@ def semantic_similarity(symptom, corpus):
             most_sim = symp
             max_sim = d
     return max_sim, most_sim
-# def my_simp(symptom, corpus):
-#     max_sim = 0
-#     nlp = spacy.load("en_core_web_lg")
-#     doc = nlp(str(symptom))
-#     most_sim = None
-#     for sym in corpus:
-#         d = doc.similarity(nlp(sym))
-#         if d > max_sim:
-#             most_sim=sym
-#             max_sim = d
-#     return max_sim, most_sim
 
 
 def suggest_symptom(sympt):
