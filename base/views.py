@@ -424,7 +424,7 @@ class PatientList(UserPassesTestMixin, ListView):
         # reverse the list to get the lastest first
         return Patient.objects.all().order_by('-id')
 
-    # Guide against unathorized access
+    # Prevent  unathorized access
     def test_func(self):
         return self.request.user.is_staff
 
@@ -499,7 +499,6 @@ def model_response(request):
                 session["gender"] = gender
 
     if "step" not in session:
-        # return HttpResponse("What is your name ?")
         if resp.lower() == "ok":
             session["name"] = current_user.username
             session["gender"] = current_user.gender
@@ -532,7 +531,8 @@ def model_response(request):
         sym1 = preprocess(sym1)
         sim1, psym1 = syntactic_similarity(sym1, all_symptoms_preprocessed)
         temp = [sym1, sim1, psym1]
-        session['F_SYM'] = temp  # information on the first symptom
+        # save information on the first symptom in the session
+        session['F_SYM'] = temp
         # now set 'step' to 'second_symp to get second symptom from user
         session['step'] = "second_symp"
         if sim1 == 1:  # sim1 == 1 if input does not match any exact symptom, so we find the related symptom the user is trying to express from all the possible symptoms
@@ -602,7 +602,7 @@ def model_response(request):
             session['step'] = "sim1=0"
         else:
             session['step'] = "BFsim2=0"
-    if session['step'] == "sim1=0":  # semantic no => suggestion
+    if session['step'] == "sim1=0":
         temp = session["F_SYM"]
         sym1 = temp[0]
         sim1 = temp[1]
@@ -718,10 +718,7 @@ def model_response(request):
                 all_sym = session["all"]
                 if resp.upper() == "YES":
                     all_sym.append(symts[0])
-                    # session["all"] = [clean_symptom(sym) for sym in all_sym]
                     session["all"] = all_sym
-                    print(
-                        f'possible disease {possible_diseases(session["all"])}')
                 del symts[0]
                 session["symv"] = symts
         if "symv" not in session:
@@ -741,8 +738,6 @@ def model_response(request):
                 return model_response(request)
         else:
             PD = possible_diseases(session["all"])
-            print(
-                f"PD of possible diseases: {possible_diseases(session['all'])}")
             diseases = session["diseases"]
             if diseases[0] in PD:
                 session["test_prediction"] = diseases[0]

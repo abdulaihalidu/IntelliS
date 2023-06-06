@@ -24,7 +24,7 @@ class createUserForm(UserCreationForm):
     password1 = forms.CharField(widget=forms.PasswordInput(
         attrs={'class': 'form-control', 'placeholder': 'Password'}))
     password2 = forms.CharField(widget=forms.PasswordInput(
-        attrs={'class': 'form-control', 'placeholder': 'Password Again'}))
+        attrs={'class': 'form-control', 'placeholder': 'Retype Password'}))
     gender = forms.CharField(widget=forms.TextInput(
         attrs={'class': 'form-control', 'placeholder': 'Gender'}), max_length=32, help_text='Enter gender')
     age = forms.IntegerField(widget=forms.TextInput(
