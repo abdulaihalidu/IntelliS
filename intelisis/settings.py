@@ -27,7 +27,7 @@ environ.Env.read_env()
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-b)+k5fzj2yc7zso*+d0m!!m&!^c$p%gxj7_9@_u6#fv5&0^t+p'
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -79,27 +79,20 @@ WSGI_APPLICATION = 'intelisis.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-""""
 DATABASES = {
     'default': {
         # 'ENGINE': 'django.db.backends.sqlite3',
         # 'NAME': BASE_DIR / 'db.sqlite3',
 
         # Use postgreSQL on local machine. This setting should be changed accordingly depending on where the database is hosted.
-        # 'ENGINE': 'django.db.backends.postgresql',
-        # 'NAME': 'IntelliS',
-        # 'USER': 'IntelliS',
-        # 'PASSWORD': 'password',
-        # 'HOST': 'localhost',
-        # 'PORT': '5432'
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'IntelliS',
+        'USER': 'IntelliS',
+        'PASSWORD': 'password',
+        'HOST': 'localhost',
+        'PORT': '5432'
 
     }
-}
-"""
-
-# Render postgresql (live)
-DATABASES = {
-    'default': dj_database_url.parse(env('DATABASE_URL'))
 }
 
 # Password validation
@@ -142,15 +135,3 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# Default language
-# LANGUAGE_CODE = "en"
-
-# LANGUAGES = (
-#     ('en', _("English")),
-#     ('tr', _("Turkish")),
-# )
-
-# LOCALE_PATHS = (
-#     os.path.join(BASE_DIR, 'locale/'),
-# )
