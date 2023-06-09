@@ -10,7 +10,7 @@ from .forms import createUserForm
 from django.views.generic.list import ListView
 
 ################ MODELS IMPOERTS ##########################
-from .models import Patient, Disease
+from .models import Patient, Disease, Doctor
 
 import numpy as np
 import pandas as pd
@@ -363,8 +363,8 @@ def logInPage(request):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            # Only create a patient profile for only non-admin users
-            if not user.is_staff:
+            # Only create a patient profile for only non-admin users and non doctors
+            if not user.is_staff and not (user.groups.filter(name="Doctors").exists()):
                 patient, _ = Patient.objects.get_or_create(username=username)
                 # For first time login patients only
                 if not patient.user:
@@ -374,8 +374,13 @@ def logInPage(request):
                 USER = user
                 current_user = patient
             login(request, user)
+            # Redirect user to doctor page if he is part of the "Doctors" group
+            if user.groups.filter(name="Doctors").exists():
+                return redirect("doctor-page")
+            # Redirect user to admin page if he is an admin
             if user.is_staff:
                 return redirect('admin-page')
+            # user is not a staff or a doctor. He has no business on the admin page. He better visits the patient page (his profile)
             return redirect('chat')
         else:
             messages.info(request, 'Username Or Password incorrect!')
@@ -395,6 +400,9 @@ def logoutUser(request):
 
 def admin_page(request):
     user = request.user
+    # Redirect user to doctors page if he is a doctor. (a doctor is also registered as a staff)
+    if user.groups.filter(name="Doctors").exists():
+        return redirect('doctor-page')
     if user.is_staff:
         # get all patients, starting from recently added
         patients = Patient.objects.all().order_by('-id')
@@ -412,7 +420,29 @@ def admin_page(request):
         }
         return render(request, "base/admin-panel.html", context)
     else:
-        return redirect('login')
+        # It's a normal user trying to access the admin page. Redirect them to their profile
+        return redirect('patient-profile')
+
+
+def doctor_page(request):
+    user = request.user
+    if user.groups.filter(name="Doctors").exists():
+        doctor = Doctor.objects.get(user=user)
+
+        department = doctor.department
+        diseases = Disease.objects.filter(department=department)
+        context = {
+            'diseases': diseases,
+            'department': department.upper(),
+            'doctor': doctor
+        }
+        return render(request, "base/doctor-page.html", context)
+    elif user.is_staff:
+        # It's a staff user (but not a doctor -> an admin), redirect her to the admin page
+        return redirect('admin-page')
+    else:
+        # Otherwise it's a user trying to access the doctor's page. redirect them to their profile
+        return redirect('patient-profile')
 
 
 class PatientList(UserPassesTestMixin, ListView):
@@ -426,10 +456,15 @@ class PatientList(UserPassesTestMixin, ListView):
 
     # Prevent  unathorized access
     def test_func(self):
-        return self.request.user.is_staff
+        # Only allow admin access
+        return self.request.user.is_staff and not (self.request.user.groups.filter(name="Doctors").exists())
 
     def handle_no_permission(self):
-        return redirect('login')
+        # Direct doctors to their page
+        if self.request.user.is_staff:
+            return redirect('doctor-page')
+        # Redirect normal users to their profile
+        return redirect('patient-profile')
 
 
 class DiseaseList(UserPassesTestMixin, ListView):
@@ -443,10 +478,14 @@ class DiseaseList(UserPassesTestMixin, ListView):
 
     # Guide against unathorized access
     def test_func(self):
-        return self.request.user.is_staff
+        return self.request.user.is_staff and not (self.request.user.groups.filter(name="Doctors").exists())
 
     def handle_no_permission(self):
-        return redirect('login')
+        # Direct doctors to their page
+        if self.request.user.is_staff:
+            return redirect('doctor-page')
+        # Redirect normal users to their profile
+        return redirect('patient-profile')
 
 
 def patient_profile(request):
@@ -771,7 +810,7 @@ def model_response(request):
             session["disease"] = result[0]
             # Check if user is connected (logged in before proceeding)
             if request.user is not None:
-                # Save diagnosed disease
+                # Save diagnosed disease to database
                 department = train_d.loc[train_d['prognosis']
                                          == session["disease"], 'department'].iloc[0]
                 session["department"] = department
@@ -795,7 +834,7 @@ def model_response(request):
             f'Kindly see a doctor at the "{department.upper()}" unit. Tap any key to continue...')
     if session['step'] == "FINAL":
         session['step'] = "BYE"
-        return HttpResponse("Diagnosis completed. Do you need another medical consultation (yes or no)?")
+        return HttpResponse("Diagnosis process completed. Do you want to start another diagnosis process (yes or no)?")
     if session['step'] == "BYE":
         name = session["name"]
         age = session["age"]

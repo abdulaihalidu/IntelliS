@@ -11,6 +11,13 @@ class PatientAdmin(admin.ModelAdmin):
     search_fields = ("username__icontains",)
 
 
+@admin.register(Doctor)
+class DoctorAdmin(admin.ModelAdmin):
+    list_display = ('first_name', 'last_name', 'department')
+    list_filter = ('username', 'department',)
+    search_fields = ("username__icontains",)
+
+
 @admin.register(Disease)
 class DiseaseAdmin(admin.ModelAdmin):
     list_display = ('patient', 'title', 'date')
@@ -21,4 +28,4 @@ class DiseaseAdmin(admin.ModelAdmin):
 # Customize the default Django admin site
 admin.site.site_header = "IntelliS Administration"
 admin.site.site_title = "IntelliS Admin Site"
-admin.site.index_title = "IntelliS Admin Panel"
+admin.site.index_title = "IntelliS Staff Panel"
