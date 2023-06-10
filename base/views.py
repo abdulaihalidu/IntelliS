@@ -489,6 +489,10 @@ class DiseaseList(UserPassesTestMixin, ListView):
 
 
 def patient_profile(request):
+    # Direct staff users to their pages.
+    if request.user.is_staff:
+        return redirect('admin-page')
+    # current_user is set to request.user upon login and set to None upon logout
     if current_user is not None:
         diseases = current_user.disease_set.all()
         context = {
@@ -501,18 +505,22 @@ def patient_profile(request):
 
 
 def chat_page(request):
+    if request.user.is_staff:
+        # prevent staff users from accessing the chat_page. They need to create a patient account to access this page
+        return redirect("admin-page")
+    # Clear the session to clean up any previously saved data
     request.session.clear()
+    # USER is a global variable which is set to the currently logged in user, upon login
     if USER is not None:
+        # In case the USER is not None, but the session has expired then they need to re-login to access the page.
         if USER.is_authenticated:
-            # clear the current session when the user visits the bot page
+            # clear the current session when the user visits the chat page
             request.session.clear()
             return render(request, "base/chatbot.html")
         else:
             return redirect('login')
     else:
         return redirect('login')
-
-#
 
 
 def model_response(request):
